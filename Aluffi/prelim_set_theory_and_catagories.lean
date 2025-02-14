@@ -1,16 +1,64 @@
 import Mathlib.Tactic
 
+
 namespace aluffi
 
-variable {X Y : Type} 
+variable {X Y : Type}
+
+
 
 
 def IsPartition (c : Set (Set X)) : Prop :=
   (∅ ∉ c ∧ ∀ a : X, ∃! b ∈ c, a ∈ b)
 
-def myIsPartition(c : Set (Set X)) : Prop :=
-  (∅ ∉ c) ∧ (∀ x : X, ∃ p ∈ c, x ∈ p) ∧ (∀ p0 ∈ c, ∀ p1 ∈ c, p0 ≠ p1 → (p0 ∩ p1) = ∅  )
+def setoid_classes (r : Setoid X) : Set (Set X) :=
+  {s : Set X | ∃ y : X, s = {x : X | x ≈ y} }
 
+
+
+
+
+
+/-- Prove that if `\theta` is a setoid on type `X` and equivialence
+relation `R`, then the set of equivalence classes on is a partition.
+-/
+theorem T1 (r : Setoid X) : IsPartition (setoid_classes r) := by
+  apply And.intro
+  rintro ⟨y,h0⟩
+  have hy : y ∈ {x | x ≈ y} := by
+    show y ≈ y
+    rfl
+  rw [←h0] at hy
+  exact hy
+  intro y
+  apply Exists.intro {x | x ≈ y}
+  constructor
+  constructor
+  apply Exists.intro y
+  rfl
+  rw [Set.mem_setOf]
+  dsimp
+  rintro Ux ⟨⟨θ,h0⟩,h1⟩
+  rw [h0]
+
+  have h2 : y ≈ θ := by
+    rw [h0] at h1
+    exact h1
+  apply subset_antisymm
+  intro γ (hγ : γ ≈ θ)
+  exact r.trans hγ (r.symm h2)
+  intro γ (hγ : γ ≈ y)
+  exact r.trans hγ h2
+
+
+  -- apply subset_antisymm
+  -- intro γ (hγ : γ ≈ θ )
+  -- show γ ≈ y
+  -- have h2 : y ≈ θ := by
+  --   rw [h0] at h1
+  --   exact h1
+  -- exact r.trans hγ (r.symm h2)
+  
 
 
 theorem T0 (c : Set (Set X)) : IsPartition c ↔ myIsPartition c := by
@@ -89,7 +137,7 @@ theorem T0 (c : Set (Set X)) : IsPartition c ↔ myIsPartition c := by
 
 
 -- def sets_from_R (R : X → X → Prop)  : Set (Set X)  :=
---   { G : Set X | G.Nonempty ∧ ∀ a b : X, a ∈ G → (b ∈ G ↔ R a b)}
+--   
 
 -- theorem partition_sets_from_R {R : X → X → Prop} (hR : Equivalence R) :
 --   IsPartition (@sets_from_R X R) := by
